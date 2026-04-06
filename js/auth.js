@@ -27,17 +27,11 @@ const Auth = {
         return 'h_' + Math.abs(hash).toString(16);
     },
 
-    isFirstTime() {
-        return !localStorage.getItem(this.HASH_KEY);
-    },
-
-    async setup(password, confirm) {
-        if (password.length < 4) return { ok: false, msg: 'Şifre en az 4 karakter olmalı' };
-        if (password !== confirm) return { ok: false, msg: 'Şifreler eşleşmiyor' };
-        const hash = await this.hashPassword(password);
-        localStorage.setItem(this.HASH_KEY, hash);
-        sessionStorage.setItem('sp_auth', 'true');
-        return { ok: true };
+    async ensureDefaultPassword() {
+        if (!localStorage.getItem(this.HASH_KEY)) {
+            const hash = await this.hashPassword('06042026');
+            localStorage.setItem(this.HASH_KEY, hash);
+        }
     },
 
     async login(password) {
@@ -61,7 +55,7 @@ const Auth = {
 };
 
 // Login page logic
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
     // If already on app.html, just check auth
     if (window.location.pathname.includes('app.html')) {
         if (!Auth.isLoggedIn()) window.location.href = 'index.html';
@@ -74,7 +68,6 @@ document.addEventListener('DOMContentLoaded', () => {
         return;
     }
 
-    const setupSection = document.getElementById('setupSection');
     const loginSection = document.getElementById('loginSection');
     const alertBox = document.getElementById('alertBox');
 
@@ -84,23 +77,9 @@ document.addEventListener('DOMContentLoaded', () => {
         alertBox.classList.remove('d-none');
     }
 
-    if (Auth.isFirstTime()) {
-        setupSection.classList.remove('d-none');
-    } else {
-        loginSection.classList.remove('d-none');
-    }
-
-    document.getElementById('btnSetup')?.addEventListener('click', async () => {
-        const result = await Auth.setup(
-            document.getElementById('newPassword').value,
-            document.getElementById('confirmPassword').value
-        );
-        if (result.ok) {
-            window.location.href = 'app.html';
-        } else {
-            showAlert(result.msg, 'danger');
-        }
-    });
+    // Varsayılan şifre yoksa oluştur, sonra giriş ekranını göster
+    await Auth.ensureDefaultPassword();
+    loginSection.classList.remove('d-none');
 
     document.getElementById('btnLogin')?.addEventListener('click', async () => {
         const result = await Auth.login(document.getElementById('loginPassword').value);
@@ -114,8 +93,5 @@ document.addEventListener('DOMContentLoaded', () => {
     // Enter key support
     document.getElementById('loginPassword')?.addEventListener('keydown', (e) => {
         if (e.key === 'Enter') document.getElementById('btnLogin').click();
-    });
-    document.getElementById('confirmPassword')?.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter') document.getElementById('btnSetup').click();
     });
 });
