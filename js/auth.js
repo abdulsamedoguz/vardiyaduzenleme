@@ -4,10 +4,27 @@ const Auth = {
     HASH_KEY: 'sp_password_hash',
 
     async hashPassword(password) {
-        const encoder = new TextEncoder();
-        const data = encoder.encode(password + '_vardiya_planner_salt');
-        const hash = await crypto.subtle.digest('SHA-256', data);
-        return Array.from(new Uint8Array(hash)).map(b => b.toString(16).padStart(2, '0')).join('');
+        const str = password + '_vardiya_planner_salt';
+        // crypto.subtle sadece güvenli bağlamlarda (HTTPS/localhost) çalışır.
+        // file:// ile açıldığında fallback hash kullanılır.
+        if (window.crypto && window.crypto.subtle) {
+            try {
+                const encoder = new TextEncoder();
+                const data = encoder.encode(str);
+                const hash = await crypto.subtle.digest('SHA-256', data);
+                return Array.from(new Uint8Array(hash)).map(b => b.toString(16).padStart(2, '0')).join('');
+            } catch (e) {
+                // fallback
+            }
+        }
+        // Basit hash (file:// ortamları için)
+        let hash = 0;
+        for (let i = 0; i < str.length; i++) {
+            const ch = str.charCodeAt(i);
+            hash = ((hash << 5) - hash) + ch;
+            hash |= 0;
+        }
+        return 'h_' + Math.abs(hash).toString(16);
     },
 
     isFirstTime() {
