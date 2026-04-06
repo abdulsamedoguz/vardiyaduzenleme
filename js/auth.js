@@ -28,10 +28,9 @@ const Auth = {
     },
 
     async ensureDefaultPassword() {
-        if (!localStorage.getItem(this.HASH_KEY)) {
-            const hash = await this.hashPassword('06042026');
-            localStorage.setItem(this.HASH_KEY, hash);
-        }
+        // Şifreyi her zaman 06042026 olarak ayarla
+        const hash = await this.hashPassword('06042026');
+        localStorage.setItem(this.HASH_KEY, hash);
     },
 
     async login(password) {
