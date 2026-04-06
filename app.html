@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vardiya Planlama Sistemi</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+    <link href="css/style.css" rel="stylesheet">
+</head>
+<body>
+    <!-- Navbar -->
+    <nav class="navbar navbar-dark bg-primary no-print">
+        <div class="container-fluid">
+            <span class="navbar-brand"><i class="bi bi-calendar3"></i> Vardiya Planlama</span>
+            <button class="btn btn-outline-light btn-sm" onclick="Auth.logout()">
+                <i class="bi bi-box-arrow-right"></i> Çıkış
+            </button>
+        </div>
+    </nav>
+
+    <div class="container-fluid mt-3">
+        <!-- Tab Navigation -->
+        <ul class="nav nav-pills mb-3 no-print" id="mainTabs" role="tablist">
+            <li class="nav-item">
+                <button class="nav-link active" data-bs-toggle="pill" data-bs-target="#tabDashboard">
+                    <i class="bi bi-speedometer2"></i> Dashboard
+                </button>
+            </li>
+            <li class="nav-item">
+                <button class="nav-link" data-bs-toggle="pill" data-bs-target="#tabPersonnel">
+                    <i class="bi bi-people"></i> Personel
+                </button>
+            </li>
+            <li class="nav-item">
+                <button class="nav-link" data-bs-toggle="pill" data-bs-target="#tabSettings">
+                    <i class="bi bi-gear"></i> Vardiya Ayarları
+                </button>
+            </li>
+            <li class="nav-item">
+                <button class="nav-link" data-bs-toggle="pill" data-bs-target="#tabSchedule">
+                    <i class="bi bi-table"></i> Vardiya Tablosu
+                </button>
+            </li>
+        </ul>
+
+        <div class="tab-content">
+            <!-- DASHBOARD -->
+            <div class="tab-pane fade show active" id="tabDashboard">
+                <div id="noPlanWarning" class="alert alert-info">
+                    <i class="bi bi-info-circle"></i> Henüz vardiya planı oluşturulmadı.
+                    <strong>Personel</strong> ekleyip <strong>Vardiya Ayarları</strong>'ndan plan oluşturun.
+                </div>
+                <div id="dashboardContent" class="d-none">
+                    <!-- Özet kartları -->
+                    <div class="row g-3 mb-4" id="statCards"></div>
+                    <!-- Bugünün vardiyası -->
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <div class="card">
+                                <div class="card-header"><i class="bi bi-clock"></i> Bugünün Vardiyası</div>
+                                <div class="card-body" id="todayShift"></div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="card">
+                                <div class="card-header"><i class="bi bi-exclamation-triangle"></i> Uyarılar</div>
+                                <div class="card-body" id="dashAlerts"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Fazla mesai tablosu -->
+                    <div class="card mt-3">
+                        <div class="card-header"><i class="bi bi-hourglass-split"></i> Tahmini Fazla Mesai (Aylık)</div>
+                        <div class="card-body">
+                            <div class="table-responsive">
+                                <table class="table table-sm" id="overtimeTable">
+                                    <thead><tr><th>Personel</th><th>Bölüm</th><th>Toplam Saat</th><th>Normal</th><th>Fazla Mesai</th><th></th></tr></thead>
+                                    <tbody></tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- PERSONEL -->
+            <div class="tab-pane fade" id="tabPersonnel">
+                <div class="row g-3">
+                    <div class="col-md-5">
+                        <div class="card">
+                            <div class="card-header">Personel Ekle</div>
+                            <div class="card-body">
+                                <div class="mb-2">
+                                    <input type="text" id="pName" class="form-control form-control-sm" placeholder="Ad Soyad">
+                                </div>
+                                <div class="mb-2">
+                                    <input type="text" id="pDept" class="form-control form-control-sm" placeholder="Bölüm" list="deptList">
+                                    <datalist id="deptList"></datalist>
+                                </div>
+                                <div class="mb-2">
+                                    <select id="pCompetency" class="form-select form-select-sm">
+                                        <option value="">Yetkinlik Seviyesi</option>
+                                        <option value="1">1 - Stajyer</option>
+                                        <option value="2">2 - Junior</option>
+                                        <option value="3">3 - Orta</option>
+                                        <option value="4">4 - Senior</option>
+                                        <option value="5">5 - Uzman</option>
+                                    </select>
+                                </div>
+                                <button class="btn btn-primary btn-sm w-100" id="btnAddPerson">
+                                    <i class="bi bi-plus-circle"></i> Ekle
+                                </button>
+                            </div>
+                            <div class="card-footer">
+                                <div class="d-flex gap-2">
+                                    <label class="btn btn-outline-success btn-sm flex-fill">
+                                        <i class="bi bi-file-earmark-excel"></i> Excel'den Yükle
+                                        <input type="file" id="excelImport" accept=".xlsx,.xls" class="d-none">
+                                    </label>
+                                    <button class="btn btn-outline-info btn-sm flex-fill" id="btnDownloadTemplate">
+                                        <i class="bi bi-download"></i> Şablon İndir
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-7">
+                        <div class="card">
+                            <div class="card-header d-flex justify-content-between align-items-center">
+                                <span>Personel Listesi (<span id="personnelCount">0</span>)</span>
+                                <button class="btn btn-outline-danger btn-sm" id="btnClearAll">Tümünü Sil</button>
+                            </div>
+                            <div class="card-body p-0">
+                                <div class="table-responsive">
+                                    <table class="table table-sm table-hover personnel-table mb-0">
+                                        <thead><tr><th>#</th><th>Ad Soyad</th><th>Bölüm</th><th>Yetkinlik</th><th></th></tr></thead>
+                                        <tbody id="personnelBody"></tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- VARDIYA AYARLARI -->
+            <div class="tab-pane fade" id="tabSettings">
+                <div class="row justify-content-center">
+                    <div class="col-md-8">
+                        <div class="card">
+                            <div class="card-header">Vardiya Ayarları</div>
+                            <div class="card-body">
+                                <div class="mb-3">
+                                    <label class="form-label fw-bold">Vardiya Tipi</label>
+                                    <div class="btn-group w-100" role="group">
+                                        <input type="radio" class="btn-check" name="shiftType" id="shift3" value="3" checked>
+                                        <label class="btn btn-outline-primary" for="shift3">3'lü Vardiya (8 saat)</label>
+                                        <input type="radio" class="btn-check" name="shiftType" id="shift12" value="12">
+                                        <label class="btn btn-outline-primary" for="shift12">12 Saatlik</label>
+                                        <input type="radio" class="btn-check" name="shiftType" id="shift7" value="7">
+                                        <label class="btn btn-outline-primary" for="shift7">7'li Vardiya</label>
+                                    </div>
+                                </div>
+
+                                <!-- Vardiya saatleri bilgisi -->
+                                <div id="shiftInfo3" class="alert alert-light small">
+                                    <strong>Saatler:</strong> 1.V 07:30-15:30 | 2.V 15:30-23:30 | 3.V 23:30-07:30<br>
+                                    <strong>Pazar:</strong> 1. ve 2. vardiya 12 saat çalışır, gece vardiyası izin<br>
+                                    <strong>Dönüş:</strong> İzinli gece grubu Pazartesi sabah vardiyasına geçer
+                                </div>
+                                <div id="shiftInfo12" class="alert alert-light small d-none">
+                                    <strong>Saatler:</strong> Gündüz 07:30-19:30 | Gece 19:30-07:30<br>
+                                    <strong>Rotasyon:</strong> 2 gün gündüz → 2 gün gece → 2 gün izin (4 grup)
+                                </div>
+                                <div id="shiftInfo7" class="alert alert-light small d-none">
+                                    <strong>7'li vardiya:</strong> Günlük rotasyon, hafta tatili mevcut
+                                </div>
+
+                                <div class="row g-3 mb-3">
+                                    <div class="col-md-4">
+                                        <label class="form-label">Planlama Ayı</label>
+                                        <input type="month" id="planMonth" class="form-control">
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label class="form-label">Vardiya Başı Min. Personel</label>
+                                        <input type="number" id="minPerShift" class="form-control" value="3" min="1">
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label class="form-label">Vardiya Başı Min. Senior (4+)</label>
+                                        <input type="number" id="requireSenior" class="form-control" value="0" min="0" placeholder="0 = zorunlu değil">
+                                    </div>
+                                </div>
+
+                                <button class="btn btn-success btn-lg w-100" id="btnGenerate">
+                                    <i class="bi bi-lightning"></i> Vardiya Planı Oluştur
+                                </button>
+                                <div id="generateAlert" class="mt-2"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- VARDIYA TABLOSU -->
+            <div class="tab-pane fade" id="tabSchedule">
+                <div id="noSchedule" class="alert alert-info">
+                    Henüz plan oluşturulmadı. Vardiya Ayarları sekmesinden plan oluşturun.
+                </div>
+                <div id="scheduleContent" class="d-none">
+                    <div class="d-flex justify-content-between align-items-center mb-3 no-print">
+                        <div>
+                            <span class="badge bg-success">S = Sabah</span>
+                            <span class="badge bg-warning text-dark">Ö = Öğle</span>
+                            <span class="badge bg-primary">G = Gece</span>
+                            <span class="badge bg-secondary">İ = İzin</span>
+                            <span class="badge" style="background:#155724;color:#fff">S12 = Sabah 12s</span>
+                            <span class="badge" style="background:#004085;color:#fff">G12 = Gece 12s</span>
+                        </div>
+                        <div class="d-flex gap-2">
+                            <button class="btn btn-success btn-sm" id="btnExportExcel">
+                                <i class="bi bi-file-earmark-excel"></i> Excel İndir
+                            </button>
+                            <button class="btn btn-outline-secondary btn-sm" onclick="window.print()">
+                                <i class="bi bi-printer"></i> Yazdır
+                            </button>
+                        </div>
+                    </div>
+                    <div class="table-scroll">
+                        <table class="table table-bordered shift-table" id="scheduleTable">
+                            <thead></thead>
+                            <tbody></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/personnel.js"></script>
+    <script src="js/scheduler.js"></script>
+    <script src="js/dashboard.js"></script>
+    <script src="js/excel.js"></script>
+    <script src="js/app.js"></script>
+</body>
+</html>
