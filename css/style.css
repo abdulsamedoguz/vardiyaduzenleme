@@ -1,4 +1,4 @@
-/* Vardiya Planlama - Özel Stiller */
+/* Vardiya Planlama - Ozel Stiller */
 
 :root {
     --shift-morning: #28a745;
@@ -41,14 +41,48 @@ body {
     padding: 4px 2px;
 }
 
+/* Klasik vardiya hucre renkleri */
 .shift-S { background-color: var(--shift-morning-bg); color: var(--shift-morning); font-weight: 600; }
 .shift-O { background-color: var(--shift-afternoon-bg); color: var(--shift-afternoon); font-weight: 600; }
+.shift-A { background-color: var(--shift-afternoon-bg); color: var(--shift-afternoon); font-weight: 600; }
 .shift-G { background-color: var(--shift-night-bg); color: var(--shift-night); font-weight: 600; }
 .shift-I { background-color: var(--shift-off-bg); color: var(--shift-off); }
+.shift-T { background-color: var(--shift-off-bg); color: var(--shift-off); }
 .shift-S12 { background-color: #b8e6cc; color: #155724; font-weight: 600; }
 .shift-G12 { background-color: #99ccff; color: #004085; font-weight: 600; }
 
-/* Dashboard kartları */
+/* 7'li vardiya - Gun bazli tablo baslik renkleri */
+.shift-col-S { background-color: #d4edda !important; }
+.shift-col-A { background-color: #ffe5cc !important; }
+.shift-col-G { background-color: #cce5ff !important; }
+.shift-col-T { background-color: #e2e3e5 !important; }
+
+/* Haftalik rotasyon tablosu hucre renkleri */
+.shift-cell-S { background-color: #d4edda; color: #28a745; font-weight: 700; }
+.shift-cell-A { background-color: #ffe5cc; color: #fd7e14; font-weight: 700; }
+.shift-cell-G { background-color: #cce5ff; color: #007bff; font-weight: 700; }
+.shift-cell-T { background-color: #f8f9fa; color: #adb5bd; }
+
+/* Grup badge */
+.group-badge {
+    display: inline-block;
+    border-radius: 4px;
+    padding: 2px 8px;
+    font-weight: 600;
+    letter-spacing: 1px;
+}
+
+/* Grup kartlari */
+.group-card {
+    border: none;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.group-card .card-header {
+    border-bottom: none;
+}
+
+/* Dashboard kartlari */
 .stat-card {
     border-left: 4px solid;
     transition: transform 0.2s;
@@ -99,7 +133,7 @@ body {
 /* Responsive tablo scroll */
 .table-scroll {
     overflow-x: auto;
-    max-height: 70vh;
+    max-height: 75vh;
     overflow-y: auto;
 }
 
@@ -114,7 +148,7 @@ body {
     left: 0;
     background: #fff;
     z-index: 2;
-    min-width: 140px;
+    min-width: 100px;
     border-right: 2px solid #dee2e6;
 }
 
@@ -122,13 +156,29 @@ body {
     z-index: 3;
 }
 
+/* 7'li vardiya tablosu icin daha genis sutunlar */
+.shift-table td:nth-child(3),
+.shift-table td:nth-child(4),
+.shift-table td:nth-child(5),
+.shift-table td:nth-child(6) {
+    min-width: 60px;
+}
+
 /* Tab content padding */
 .tab-pane {
     padding-top: 1.5rem;
+}
+
+/* Grup paneli scroll */
+#groupPanel {
+    max-height: 75vh;
+    overflow-y: auto;
 }
 
 /* Print styles */
 @media print {
     .no-print { display: none !important; }
     .shift-table { font-size: 0.7rem; }
+    #groupPanel { max-height: none; overflow: visible; }
+    .group-card { break-inside: avoid; }
 }

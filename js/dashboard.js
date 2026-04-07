@@ -29,10 +29,12 @@ const Dashboard = {
         const deficitCount = alerts.filter(a => a.type === 'deficit').length;
 
         const shiftTypeName = {
-            '3': '3\'lü Vardiya (8 saat)',
+            '3': "3'lu Vardiya (8 saat)",
             '12': '12 Saatlik Vardiya',
-            '7': '7\'li Vardiya'
+            '7': "7'li Vardiya (7 Grup)"
         }[schedule.type] || schedule.type;
+
+        const groupInfo = schedule.type === '7' ? `${schedule.groupNames.length} Grup` : '';
 
         document.getElementById('statCards').innerHTML = `
             <div class="col-md-3">
@@ -40,16 +42,16 @@ const Dashboard = {
                     <div class="card-body py-2">
                         <div class="text-muted small">Personel</div>
                         <div class="h4 mb-0">${totalPersonnel}</div>
-                        <div class="text-muted small">${shiftTypeName}</div>
+                        <div class="text-muted small">${shiftTypeName} ${groupInfo}</div>
                     </div>
                 </div>
             </div>
             <div class="col-md-3">
                 <div class="card stat-card border-success">
                     <div class="card-body py-2">
-                        <div class="text-muted small">Planlama Ayı</div>
+                        <div class="text-muted small">Planlama Ayi</div>
                         <div class="h4 mb-0">${schedule.config.month}</div>
-                        <div class="text-muted small">${schedule.days.length} gün</div>
+                        <div class="text-muted small">${schedule.days.length} gun</div>
                     </div>
                 </div>
             </div>
@@ -58,14 +60,14 @@ const Dashboard = {
                     <div class="card-body py-2">
                         <div class="text-muted small">Toplam Fazla Mesai</div>
                         <div class="h4 mb-0">${totalOvertime} <small class="fs-6">saat</small></div>
-                        <div class="text-muted small">Kişi ort: ${totalPersonnel > 0 ? Math.round(totalOvertime / totalPersonnel) : 0}s</div>
+                        <div class="text-muted small">Kisi ort: ${totalPersonnel > 0 ? Math.round(totalOvertime / totalPersonnel) : 0}s</div>
                     </div>
                 </div>
             </div>
             <div class="col-md-3">
                 <div class="card stat-card ${surplusCount > 0 || deficitCount > 0 ? 'border-danger' : 'border-success'}">
                     <div class="card-body py-2">
-                        <div class="text-muted small">Uyarılar</div>
+                        <div class="text-muted small">Uyarilar</div>
                         <div class="h4 mb-0">${surplusCount + deficitCount}</div>
                         <div class="text-muted small">
                             ${surplusCount > 0 ? `<span class="text-warning">${surplusCount} fazla</span> ` : ''}
@@ -83,10 +85,9 @@ const Dashboard = {
         const today = new Date();
         const [sYear, sMonth] = schedule.config.month.split('-').map(Number);
 
-        // Check if today is in the schedule month
         if (today.getFullYear() !== sYear || (today.getMonth() + 1) !== sMonth) {
-            container.innerHTML = `<p class="text-muted">Planlanan ay (${schedule.config.month}) bugünkü tarihle eşleşmiyor.</p>
-                <p class="small">Ayın 1. günü için gösterim:</p>`;
+            container.innerHTML = `<p class="text-muted">Planlanan ay (${schedule.config.month}) bugunku tarihle eslesmyor.</p>
+                <p class="small">Ayin 1. gunu icin gosterim:</p>`;
             this._renderDayShift(container, schedule, 1);
             return;
         }
@@ -95,27 +96,68 @@ const Dashboard = {
     },
 
     _renderDayShift(container, schedule, dayNum) {
+        if (schedule.type === '7') {
+            // 7'li vardiya icin grup bazli gosterim
+            const dayIdx = dayNum - 1;
+            const assignment = schedule.dayGroupAssignments[dayIdx];
+            if (!assignment) { container.innerHTML += '<p>Veri bulunamadi</p>'; return; }
+
+            const shiftLabels = {
+                'S': '<span class="badge bg-success">Sabah 07:30-15:30</span>',
+                'A': '<span class="badge bg-warning text-dark">Aksam 15:30-23:30</span>',
+                'G': '<span class="badge bg-primary">Gece 23:30-07:30</span>'
+            };
+
+            let html = `<h6>Gun ${dayNum}</h6>`;
+
+            ['S', 'A', 'G'].forEach(shift => {
+                const groupName = assignment[shift];
+                if (groupName) {
+                    const gi = Scheduler.GROUP_NAMES.indexOf(groupName);
+                    const groupPersonIds = schedule.groups[gi];
+                    const persons = schedule.personnel.filter(p => groupPersonIds.includes(p.id));
+                    const color = Scheduler.GROUP_COLORS[groupName];
+
+                    html += `<div class="mb-2">
+                        ${shiftLabels[shift]}
+                        <span class="badge" style="background:${color.bg};color:${color.text}">Grup ${groupName}</span>
+                        <span class="badge bg-dark">${persons.length} kisi</span>
+                        <div class="small text-muted">${persons.map(p => p.name).join(', ')}</div>
+                    </div>`;
+                }
+            });
+
+            html += `<div class="mb-2"><span class="badge bg-secondary">Tatil</span> ${assignment.T.map(g => {
+                const color = Scheduler.GROUP_COLORS[g];
+                return `<span class="badge" style="background:${color.bg};color:${color.text}">Grup ${g}</span>`;
+            }).join(' ')}</div>`;
+
+            container.innerHTML += html;
+            return;
+        }
+
+        // Klasik gosterim
         const shiftLabels = {
             'S': '<span class="badge bg-success">Sabah 07:30-15:30</span>',
-            'O': '<span class="badge bg-warning text-dark">Öğle 15:30-23:30</span>',
+            'O': '<span class="badge bg-warning text-dark">Ogle 15:30-23:30</span>',
             'G': '<span class="badge bg-primary">Gece 23:30-07:30</span>',
-            'S12': '<span class="badge" style="background:#155724">Gündüz 07:30-19:30</span>',
+            'S12': '<span class="badge" style="background:#155724">Gunduz 07:30-19:30</span>',
             'G12': '<span class="badge" style="background:#004085">Gece 19:30-07:30</span>',
-            'I': '<span class="badge bg-secondary">İzin</span>'
+            'I': '<span class="badge bg-secondary">Izin</span>'
         };
 
         const dayGroups = {};
         schedule.personnel.forEach(p => {
-            const assignment = schedule.assignments[p.id]?.find(a => a.day === dayNum);
-            if (assignment) {
-                if (!dayGroups[assignment.shift]) dayGroups[assignment.shift] = [];
-                dayGroups[assignment.shift].push(p.name);
+            const a = schedule.assignments[p.id]?.find(a => a.day === dayNum);
+            if (a) {
+                if (!dayGroups[a.shift]) dayGroups[a.shift] = [];
+                dayGroups[a.shift].push(p.name);
             }
         });
 
-        let html = `<h6>Gün ${dayNum}</h6>`;
+        let html = `<h6>Gun ${dayNum}</h6>`;
         Object.entries(dayGroups).forEach(([shift, names]) => {
-            html += `<div class="mb-2">${shiftLabels[shift] || shift} <span class="badge bg-dark">${names.length} kişi</span>
+            html += `<div class="mb-2">${shiftLabels[shift] || shift} <span class="badge bg-dark">${names.length} kisi</span>
                 <div class="small text-muted">${names.join(', ')}</div></div>`;
         });
 
@@ -126,28 +168,27 @@ const Dashboard = {
         const container = document.getElementById('dashAlerts');
 
         if (alerts.length === 0) {
-            container.innerHTML = '<p class="text-success"><i class="bi bi-check-circle"></i> Herşey yolunda, uyarı yok.</p>';
+            container.innerHTML = '<p class="text-success"><i class="bi bi-check-circle"></i> Hersey yolunda, uyari yok.</p>';
             return;
         }
 
-        const shiftNames = { 'S': 'Sabah', 'O': 'Öğle', 'G': 'Gece', 'S12': 'Gündüz 12s', 'G12': 'Gece 12s' };
+        const shiftNames = { 'S': 'Sabah', 'O': 'Ogle', 'A': 'Aksam', 'G': 'Gece', 'S12': 'Gunduz 12s', 'G12': 'Gece 12s' };
 
-        // İlk 10 uyarıyı göster
         const shown = alerts.slice(0, 10);
         let html = '<ul class="list-group list-group-flush">';
         shown.forEach(a => {
             if (a.type === 'surplus') {
                 html += `<li class="list-group-item list-group-item-warning py-1 small">
-                    <i class="bi bi-exclamation-triangle"></i> Gün ${a.day} - ${shiftNames[a.shift] || a.shift}: ${a.count} kişi (${a.surplus} fazla)
+                    <i class="bi bi-exclamation-triangle"></i> Gun ${a.day} - ${shiftNames[a.shift] || a.shift}: ${a.count} kisi (${a.surplus} fazla)
                 </li>`;
             } else {
                 html += `<li class="list-group-item list-group-item-danger py-1 small">
-                    <i class="bi bi-x-circle"></i> Gün ${a.day} - ${shiftNames[a.shift] || a.shift}: ${a.count} kişi (${a.deficit} eksik)
+                    <i class="bi bi-x-circle"></i> Gun ${a.day} - ${shiftNames[a.shift] || a.shift}: ${a.count} kisi (${a.deficit} eksik)
                 </li>`;
             }
         });
         if (alerts.length > 10) {
-            html += `<li class="list-group-item py-1 small text-muted">...ve ${alerts.length - 10} uyarı daha</li>`;
+            html += `<li class="list-group-item py-1 small text-muted">...ve ${alerts.length - 10} uyari daha</li>`;
         }
         html += '</ul>';
         container.innerHTML = html;
@@ -163,6 +204,7 @@ const Dashboard = {
             return `<tr>
                 <td><strong>${escapeHtml(s.name)}</strong></td>
                 <td>${escapeHtml(s.department || '-')}</td>
+                <td>${escapeHtml(s.section || '-')}</td>
                 <td>${s.totalHours}s</td>
                 <td>${s.normalHours}s</td>
                 <td>

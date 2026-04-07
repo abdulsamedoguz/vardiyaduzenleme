@@ -52,9 +52,7 @@
                     <strong>Personel</strong> ekleyip <strong>Vardiya Ayarları</strong>'ndan plan oluşturun.
                 </div>
                 <div id="dashboardContent" class="d-none">
-                    <!-- Özet kartları -->
                     <div class="row g-3 mb-4" id="statCards"></div>
-                    <!-- Bugünün vardiyası -->
                     <div class="row g-3">
                         <div class="col-md-6">
                             <div class="card">
@@ -69,13 +67,12 @@
                             </div>
                         </div>
                     </div>
-                    <!-- Fazla mesai tablosu -->
                     <div class="card mt-3">
                         <div class="card-header"><i class="bi bi-hourglass-split"></i> Tahmini Fazla Mesai (Aylık)</div>
                         <div class="card-body">
                             <div class="table-responsive">
                                 <table class="table table-sm" id="overtimeTable">
-                                    <thead><tr><th>Personel</th><th>Bölüm</th><th>Toplam Saat</th><th>Normal</th><th>Fazla Mesai</th><th></th></tr></thead>
+                                    <thead><tr><th>Personel</th><th>Departman</th><th>Kısım</th><th>Toplam Saat</th><th>Normal</th><th>Fazla Mesai</th><th></th></tr></thead>
                                     <tbody></tbody>
                                 </table>
                             </div>
@@ -95,8 +92,12 @@
                                     <input type="text" id="pName" class="form-control form-control-sm" placeholder="Ad Soyad">
                                 </div>
                                 <div class="mb-2">
-                                    <input type="text" id="pDept" class="form-control form-control-sm" placeholder="Bölüm" list="deptList">
+                                    <input type="text" id="pDept" class="form-control form-control-sm" placeholder="Departman" list="deptList">
                                     <datalist id="deptList"></datalist>
+                                </div>
+                                <div class="mb-2">
+                                    <input type="text" id="pSection" class="form-control form-control-sm" placeholder="Kısım" list="sectionList">
+                                    <datalist id="sectionList"></datalist>
                                 </div>
                                 <div class="mb-2">
                                     <select id="pCompetency" class="form-select form-select-sm">
@@ -134,7 +135,7 @@
                             <div class="card-body p-0">
                                 <div class="table-responsive">
                                     <table class="table table-sm table-hover personnel-table mb-0">
-                                        <thead><tr><th>#</th><th>Ad Soyad</th><th>Bölüm</th><th>Yetkinlik</th><th></th></tr></thead>
+                                        <thead><tr><th>#</th><th>Ad Soyad</th><th>Departman</th><th>Kısım</th><th>Yetkinlik</th><th></th></tr></thead>
                                         <tbody id="personnelBody"></tbody>
                                     </table>
                                 </div>
@@ -163,7 +164,6 @@
                                     </div>
                                 </div>
 
-                                <!-- Vardiya saatleri bilgisi -->
                                 <div id="shiftInfo3" class="alert alert-light small">
                                     <strong>Saatler:</strong> 1.V 07:30-15:30 | 2.V 15:30-23:30 | 3.V 23:30-07:30<br>
                                     <strong>Pazar:</strong> 1. ve 2. vardiya 12 saat çalışır, gece vardiyası izin<br>
@@ -174,7 +174,9 @@
                                     <strong>Rotasyon:</strong> 2 gün gündüz → 2 gün gece → 2 gün izin (4 grup)
                                 </div>
                                 <div id="shiftInfo7" class="alert alert-light small d-none">
-                                    <strong>7'li vardiya:</strong> Günlük rotasyon, hafta tatili mevcut
+                                    <strong>7 Grup (A-G):</strong> Her gün 3 grup çalışır (Sabah/Akşam/Gece), 4 grup tatil<br>
+                                    <strong>Saatler:</strong> 07:30-15:30 | 15:30-23:30 | 23:30-07:30<br>
+                                    <strong>Rotasyon:</strong> Her grup 3 gün çalışır (S→A→G) sonra 4 gün tatil
                                 </div>
 
                                 <div class="row g-3 mb-3">
@@ -209,13 +211,11 @@
                 </div>
                 <div id="scheduleContent" class="d-none">
                     <div class="d-flex justify-content-between align-items-center mb-3 no-print">
-                        <div>
+                        <div id="shiftLegend">
                             <span class="badge bg-success">S = Sabah</span>
-                            <span class="badge bg-warning text-dark">Ö = Öğle</span>
+                            <span class="badge bg-warning text-dark">A = Akşam</span>
                             <span class="badge bg-primary">G = Gece</span>
-                            <span class="badge bg-secondary">İ = İzin</span>
-                            <span class="badge" style="background:#155724;color:#fff">S12 = Sabah 12s</span>
-                            <span class="badge" style="background:#004085;color:#fff">G12 = Gece 12s</span>
+                            <span class="badge bg-secondary">T = Tatil</span>
                         </div>
                         <div class="d-flex gap-2">
                             <button class="btn btn-success btn-sm" id="btnExportExcel">
@@ -226,11 +226,23 @@
                             </button>
                         </div>
                     </div>
-                    <div class="table-scroll">
-                        <table class="table table-bordered shift-table" id="scheduleTable">
-                            <thead></thead>
-                            <tbody></tbody>
-                        </table>
+
+                    <!-- Vardiya Programı Header -->
+                    <div id="scheduleHeader" class="mb-3"></div>
+
+                    <div class="row">
+                        <!-- Sol: Gün bazlı vardiya tablosu -->
+                        <div class="col-lg-8">
+                            <div class="table-scroll">
+                                <table class="table table-bordered shift-table" id="scheduleTable">
+                                    <thead></thead>
+                                    <tbody></tbody>
+                                </table>
+                            </div>
+                        </div>
+                        <!-- Sag: Grup paneli -->
+                        <div class="col-lg-4" id="groupPanel">
+                        </div>
                     </div>
                 </div>
             </div>

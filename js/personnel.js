@@ -1,4 +1,4 @@
-// personnel.js - Personel CRUD işlemleri
+// personnel.js - Personel CRUD islemleri
 
 const Personnel = {
     STORAGE_KEY: 'sp_personnel',
@@ -40,12 +40,16 @@ const Personnel = {
         return [...new Set(all.map(p => p.department).filter(Boolean))];
     },
 
+    getSections() {
+        const all = this.getAll();
+        return [...new Set(all.map(p => p.section).filter(Boolean))];
+    },
+
     getByCompetency(minLevel) {
         return this.getAll().filter(p => p.competency >= minLevel);
     },
 
     importFromExcel(data) {
-        // data = array of {name, department, competency}
         const list = this.getAll();
         data.forEach(row => {
             if (row.name && row.name.trim()) {
@@ -53,6 +57,7 @@ const Personnel = {
                     id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
                     name: row.name.trim(),
                     department: (row.department || '').trim(),
+                    section: (row.section || '').trim(),
                     competency: parseInt(row.competency) || 3
                 });
             }
@@ -70,21 +75,23 @@ function initPersonnelUI() {
     document.getElementById('btnAddPerson').addEventListener('click', () => {
         const name = document.getElementById('pName').value.trim();
         const dept = document.getElementById('pDept').value.trim();
+        const section = document.getElementById('pSection').value.trim();
         const comp = document.getElementById('pCompetency').value;
 
         if (!name) { alert('Ad Soyad gerekli'); return; }
-        if (!comp) { alert('Yetkinlik seviyesi seçin'); return; }
+        if (!comp) { alert('Yetkinlik seviyesi secin'); return; }
 
-        Personnel.add({ name, department: dept, competency: parseInt(comp) });
+        Personnel.add({ name, department: dept, section: section, competency: parseInt(comp) });
         document.getElementById('pName').value = '';
         document.getElementById('pDept').value = '';
+        document.getElementById('pSection').value = '';
         document.getElementById('pCompetency').value = '';
         renderPersonnelTable();
         updateDeptList();
     });
 
     document.getElementById('btnClearAll').addEventListener('click', () => {
-        if (confirm('Tüm personeli silmek istediğinize emin misiniz?')) {
+        if (confirm('Tum personeli silmek istediginize emin misiniz?')) {
             Personnel.clearAll();
             renderPersonnelTable();
         }
@@ -100,7 +107,7 @@ function renderPersonnelTable() {
     document.getElementById('personnelCount').textContent = list.length;
 
     if (list.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="5" class="text-center text-muted">Personel eklenmemiş</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted">Personel eklenmemis</td></tr>';
         return;
     }
 
@@ -111,6 +118,7 @@ function renderPersonnelTable() {
             <td>${i + 1}</td>
             <td>${escapeHtml(p.name)}</td>
             <td>${escapeHtml(p.department || '-')}</td>
+            <td>${escapeHtml(p.section || '-')}</td>
             <td><span class="competency-badge competency-${p.competency}">${p.competency}</span> ${compLabels[p.competency] || ''}</td>
             <td><button class="btn btn-outline-danger btn-sm py-0" onclick="deletePerson('${p.id}')"><i class="bi bi-trash"></i></button></td>
         </tr>
@@ -124,7 +132,9 @@ function deletePerson(id) {
 
 function updateDeptList() {
     const depts = Personnel.getDepartments();
+    const sections = Personnel.getSections();
     document.getElementById('deptList').innerHTML = depts.map(d => `<option value="${d}">`).join('');
+    document.getElementById('sectionList').innerHTML = sections.map(s => `<option value="${s}">`).join('');
 }
 
 function handleExcelImport(e) {
@@ -139,14 +149,15 @@ function handleExcelImport(e) {
 
         const mapped = rows.map(r => ({
             name: r['Ad Soyad'] || r['name'] || r['Ad'] || Object.values(r)[0] || '',
-            department: r['Bölüm'] || r['department'] || r['Bolum'] || Object.values(r)[1] || '',
-            competency: parseInt(r['Yetkinlik'] || r['competency'] || r['Seviye'] || Object.values(r)[2]) || 3
+            department: r['Departman'] || r['department'] || r['Bolum'] || Object.values(r)[1] || '',
+            section: r['Kisim'] || r['section'] || Object.values(r)[2] || '',
+            competency: parseInt(r['Yetkinlik'] || r['competency'] || r['Seviye'] || Object.values(r)[3]) || 3
         }));
 
         const count = Personnel.importFromExcel(mapped);
         renderPersonnelTable();
         updateDeptList();
-        alert(`${mapped.length} personel içe aktarıldı. Toplam: ${count}`);
+        alert(`${mapped.length} personel ice aktarildi. Toplam: ${count}`);
     };
     reader.readAsBinaryString(file);
     e.target.value = '';
@@ -154,12 +165,12 @@ function handleExcelImport(e) {
 
 function downloadTemplate() {
     const ws = XLSX.utils.aoa_to_sheet([
-        ['Ad Soyad', 'Bölüm', 'Yetkinlik'],
-        ['Ahmet Yılmaz', 'Üretim', 4],
-        ['Fatma Demir', 'Depo', 3],
-        ['Mehmet Kaya', 'Kalite', 5]
+        ['Ad Soyad', 'Departman', 'Kisim', 'Yetkinlik'],
+        ['Ahmet Yilmaz', 'Uretim', 'Galvaniz', 4],
+        ['Fatma Demir', 'Depo', 'Hammadde', 3],
+        ['Mehmet Kaya', 'Kalite', 'Son Kontrol', 5]
     ]);
-    ws['!cols'] = [{ wch: 20 }, { wch: 15 }, { wch: 10 }];
+    ws['!cols'] = [{ wch: 20 }, { wch: 15 }, { wch: 15 }, { wch: 10 }];
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, 'Personel');
     XLSX.writeFile(wb, 'personel_sablonu.xlsx');
